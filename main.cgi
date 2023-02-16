@@ -13,8 +13,8 @@ def index():
 def debug():
     return "<br>".join(["{} = {}".format(a,b) for a,b in os.environ.items()])
 
-@app.route("/debug/:eqw/:eqwe")
+@app.route("/debug/<int:eqw>/<String:eqwe>")
 def index2(a,b):
     return "a={}<br>b={}".format(a,b)
 
-app.start()
+app.run()

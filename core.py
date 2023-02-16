@@ -53,9 +53,15 @@ def parse_query(url):
 
 def genregex(url):
         regex="^"
+        regex_matcher=re.compile(r"^<(\w*):(\w*)>$")
         url_a=url.split("/")[1:]
         for i in url_a:
-                if i.startswith(":"):
+                a=regex_matcher.match(i)
+                if a!=None:
+                        #TODO: generate regex by converter
+                        conv=a.groups()[0]
+                        if conv not in ["int", "String", "path", "float", "uuid"]:
+                                raise Exception(f"{url}: Invalid convertor {conv}")
                         regex+=f"\/(\w*)"
                 else:
                         regex+=f"\/{i}"
@@ -95,7 +101,7 @@ class CGI_HTTP:
                         })
                 return __wrapper__
 
-        def start(self):
+        def run(self):
                 print("Content-Type: text/html\r\nCache-Control: no-cache\r\n\r\n", end="")
                 url=magic_url(os.environ.get("REQUEST_URI", ""))
                 route=None
