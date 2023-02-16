@@ -9,9 +9,12 @@ app=CGI_HTTP()
 def index():
     return render_template("index.html")
 
+@app.route("/debug")
+def debug():
+    return "<br>".join(["{} = {}".format(a,b) for a,b in os.environ.items()])
+
 @app.route("/debug/:eqw/:eqwe")
 def index2(a,b):
     return "a={}<br>b={}".format(a,b)
-    #"<br>".join(["{} = {}".format(a,b) for a,b in os.environ.items()])
 
 app.start()
