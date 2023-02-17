@@ -96,11 +96,9 @@ class CGI_HTTP:
                 for i in url_a:
                         a=regex_matcher.match(i)
                         if a!=None:
-                                #TODO: generate regex by converter
                                 conv=a.groups()[0]
                                 if conv not in self.converters:
                                         raise Exception(f"{url}: Invalid convertor {conv}")
-                                #regex+=f"\/(\w*)"
                                 regex+=self.converters[conv]()
                         else:
                                 regex+=f"\/{i}"
