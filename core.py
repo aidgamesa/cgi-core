@@ -51,23 +51,6 @@ def parse_query(url):
         d=DotDict(dict(c))
         return d
 
-def genregex(url):
-        regex="^"
-        regex_matcher=re.compile(r"^<(\w*):(\w*)>$")
-        url_a=url.split("/")[1:]
-        for i in url_a:
-                a=regex_matcher.match(i)
-                if a!=None:
-                        #TODO: generate regex by converter
-                        conv=a.groups()[0]
-                        if conv not in ["int", "String", "path", "float", "uuid"]:
-                                raise Exception(f"{url}: Invalid convertor {conv}")
-                        regex+=f"\/(\w*)"
-                else:
-                        regex+=f"\/{i}"
-        regex+="$"
-        return regex
-
 class request:
         @property
         def query(self):
@@ -76,6 +59,24 @@ class request:
 class CGI_HTTP:
         routes={}
         request=request()
+        converters={}
+
+        def __init__(self):
+                @self.converter
+                class CGI_CONVERTERS:
+                        def String_conv():
+                                return "\/(\w+)"
+                        def int_conv():
+                                return "\/(\d+)"
+                        def float_conv():
+                                return "\/(\d+.\d+)"
+                        def path_conv():
+                                return "\/([\w\/\.]+)"
+
+        def converter(self, convclass):
+                for method in dir(convclass):
+                        if method.endswith("_conv"):
+                                self.converters[method[:-5]]=object.__getattribute__(convclass,method)
 
         def fn404(self):
                 return "404 Not found"
@@ -87,9 +88,27 @@ class CGI_HTTP:
                 print(self.routes.get(f"_{code}",
                         DotDict({"fn": object.__getattribute__(self, f"fn{code}")})
                 ).fn())
+        
+        def genregex(self, url):
+                regex="^"
+                regex_matcher=re.compile(r"^<(\w*):(\w*)>$")
+                url_a=url.split("/")[1:]
+                for i in url_a:
+                        a=regex_matcher.match(i)
+                        if a!=None:
+                                #TODO: generate regex by converter
+                                conv=a.groups()[0]
+                                if conv not in self.converters:
+                                        raise Exception(f"{url}: Invalid convertor {conv}")
+                                #regex+=f"\/(\w*)"
+                                regex+=self.converters[conv]()
+                        else:
+                                regex+=f"\/{i}"
+                regex+="$"
+                return regex
 
         def route(self, path, methods={"GET"}):
-                regex=genregex(path)
+                regex=self.genregex(path)
                 if magic_url(path)!=path and not path.startswith("_"):
                         raise Exception(f"{path}: cgi url != route url, please use {magic_url(path)}")
                 elif regex in self.routes:
@@ -118,3 +137,4 @@ class CGI_HTTP:
                 elif os.environ.get("REQUEST_METHOD", "GET") not in route.methods:
                         return self.httperror(405)
                 print(route.fn(*match.groups()))
+
