@@ -116,6 +116,7 @@ class CGI_HTTP:
                                 "fn":fn,
                                 "methods":methods,
                         })
+                        return fn
                 return __wrapper__
 
         def run(self):
